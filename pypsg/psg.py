@@ -87,6 +87,23 @@ class PSG():
             reply_data_np = np.loadtxt(StringIO('\n'.join(reply_data)))
             return {'header': reply_header_str, 'spectrum': reply_data_np, 'duration_seconds': time_duration}
         except:
-            return {'config': reply_raw}
+            if otype == 'cfg':
+                return {'config': reply_raw}
+            elif otype == 'ret':
+                reply_raw = reply_raw.replace('<br/>', '\n').replace('&nbsp;', '')
+                pattern = re.compile(r"results_(.+)\.txt")
+                iterator = pattern.finditer(reply_raw)
+                spans = [match.span() for match in iterator]
+                names = [reply_raw[spans[i][0] : spans[i][1]].replace('results_', '').replace('.txt', '')
+                         for i in range(len(spans))]
+                ret = {}
+                for i in range(len(spans)):
+                    if i < len(spans)-1:
+                        ret[names[i]] = reply_raw[spans[i][1] : spans[i+1][0]].strip()
+                    else:
+                        ret[names[i]] = reply_raw[spans[i][1]:].strip()
+                return ret
+            else:
+                return {'reply' : reply_raw}
 
 
